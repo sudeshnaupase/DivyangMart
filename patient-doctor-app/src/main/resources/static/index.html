@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Patient Doctor System</title>
+    <meta charset="UTF-8">
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+
+    <h2 class="text-center mb-4">Patient Form</h2>
+
+    <!-- Patient Form -->
+    <div class="card p-4 shadow">
+        <div class="mb-3">
+            <label>Patient Name</label>
+            <input type="text" id="name" class="form-control">
+        </div>
+
+        <div class="mb-3">
+            <label>Age</label>
+            <input type="number" id="age" class="form-control">
+        </div>
+
+        <div class="mb-3">
+            <label>Gender</label>
+            <select id="gender" class="form-control">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label>Problem Type</label>
+            <select id="problem" class="form-control">
+                <option value="Eye">Eye Problem</option>
+                <option value="ENT">Hearing Problem</option>
+                <option value="Ortho">Bone / Ortho Problem</option>
+                <option value="General">General Problem</option>
+            </select>
+        </div>
+
+        <button class="btn btn-primary w-100" onclick="savePatient()">
+            Submit
+        </button>
+    </div>
+
+    <!-- Doctor List -->
+    <div class="mt-5">
+        <h3 class="text-center">Available Doctors</h3>
+        <div class="row" id="doctorData"></div>
+    </div>
+
+</div>
+
+<script>
+function savePatient() {
+
+    const problem = document.getElementById("problem").value;
+
+    const patient = {
+        name: document.getElementById("name").value,
+        age: document.getElementById("age").value,
+        gender: document.getElementById("gender").value,
+        problem: problem
+    };
+
+    fetch("/api/patient/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patient)
+    })
+    .then(() => {
+        loadDoctors(problem);
+    })
+    .catch(err => {
+        alert("Patient save error");
+        console.error(err);
+    });
+}
+
+function loadDoctors(problem) {
+
+    console.log("Fetching doctors for:", problem);
+
+    fetch("/api/doctor/speciality/" + problem)
+    .then(res => {
+        console.log("Response status:", res.status);
+        return res.json();
+    })
+    .then(data => {
+        console.log("Doctor data:", data);
+
+        let html = "";
+
+        if (!data || data.length === 0) {
+            html = "<p class='text-danger text-center'>No doctors found</p>";
+        } else {
+            data.forEach(d => {
+                html += `
+                <div class="col-md-4 mb-3">
+                    <div class="card shadow">
+                        <div class="card-body">
+                            <h5>${d.name}</h5>
+                            <p><b>Speciality:</b> ${d.speciality}</p>
+                            <p><b>Type:</b> ${d.doctorType}</p>
+                            <p><b>Phone:</b> ${d.phone}</p>
+                        </div>
+                    </div>
+                </div>`;
+            });
+        }
+
+        document.getElementById("doctorData").innerHTML = html;
+    })
+    .catch(err => {
+        alert("Doctor fetch error");
+        console.error(err);
+    });
+}
+</script>
+
+
+</body>
+</html>
